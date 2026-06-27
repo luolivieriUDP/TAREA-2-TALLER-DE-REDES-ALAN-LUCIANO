@@ -1,0 +1,36 @@
+##########################################################################
+# MODIFICACIÓN 1 - Byte de TIPO de mensaje (proxy MITM en :5433)
+# Servidor real: servidor:5432
+##########################################################################
+
+==========================================================================
+ CASO A: 'Q' (0x51) -> 'X' (0x58, Terminate)
+==========================================================================
+   Cliente envía: Query 'SELECT 1' (a través del proxy :5433)
+   [hook] 'Q' (0x51) -> 0x58   (mensaje Query reescrito)
+   Respuesta del servidor (1.5 ms):
+       Conexión cerrada por el servidor -> conexión cerrada por el servidor
+
+==========================================================================
+ CASO B: 'Q' (0x51) -> 0xFF (tipo inexistente)
+==========================================================================
+   Cliente envía: Query 'SELECT 1' (a través del proxy :5434)
+   [hook] 'Q' (0x51) -> 0xFF   (mensaje Query reescrito)
+   Respuesta del servidor (2.0 ms):
+       ErrorResponse -> FATAL 08P01: invalid frontend message type 255
+       Conexión cerrada por el servidor -> conexión cerrada por el servidor
+
+==========================================================================
+ CASO C: 'Q' (0x51) -> 'p' (0x70, PasswordMessage)
+==========================================================================
+   Cliente envía: Query 'SELECT 1' (a través del proxy :5435)
+   [hook] 'Q' (0x51) -> 0x70   (mensaje Query reescrito)
+   Respuesta del servidor (1.8 ms):
+       ErrorResponse -> FATAL 08P01: invalid frontend message type 112
+       Conexión cerrada por el servidor -> conexión cerrada por el servidor
+
+##########################################################################
+# Conclusión: corromper el byte de tipo rompe la sincronía del flujo de
+# mensajes. El servidor reacciona con cierre (Terminate) o error FATAL de
+# protocolo, pero el proceso postmaster NO se cae (cada sesión es un fork).
+##########################################################################

@@ -1,0 +1,86 @@
+# ============================================================
+# Tarea 3 - Inyección y Modificación de Tráfico con Scapy
+# Reúne el servidor y el cliente PostgreSQL de la Tarea 2 (mismas
+# credenciales, misma red redpsql) y añade el contenedor scapy_mitm.
+#
+#   docker compose up -d --build
+#   docker exec -it scapy_mitm bash
+# ============================================================
+
+services:
+
+  # ---- Servidor PostgreSQL 17 (Tarea 2) -------------------
+  servidor:
+    build:
+      context: ./tarea2
+      dockerfile: servidor/Dockerfile
+    image: tarea2/psql-servidor
+    container_name: psql-servidor
+    hostname: servidor
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-taller}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tallerpass}
+      POSTGRES_DB: ${POSTGRES_DB:-tallerdb}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./capturas:/capturas
+    networks:
+      redpsql:
+        ipv4_address: 172.18.0.2
+    cap_add:
+      - NET_ADMIN          # permite tc netem sobre eth0 del servidor
+    restart: unless-stopped
+
+  # ---- Cliente psql (Tarea 2) -----------------------------
+  cliente:
+    build:
+      context: ./tarea2
+      dockerfile: cliente/Dockerfile
+    image: tarea2/psql-cliente
+    container_name: psql-cliente
+    networks:
+      redpsql:
+        ipv4_address: 172.18.0.3
+    cap_add:
+      - NET_ADMIN          # permite tc netem sobre eth0 del cliente
+    depends_on:
+      - servidor
+    restart: unless-stopped
+
+  # ---- Contenedor Scapy / MITM (NUEVO, Tarea 3) -----------
+  scapy:
+    build: ./scapy
+    image: tarea3/scapy
+    container_name: scapy_mitm
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    privileged: true
+    volumes:
+      - ./scapy:/scripts
+      - ./capturas:/capturas
+      - ./metrics:/metrics
+    environment:
+      SERVER_HOST: ${SERVER_HOST:-servidor}
+      PG_PORT: ${PG_PORT:-5432}
+      PROXY_PORT: ${PROXY_PORT:-5433}
+      PG_USER: ${POSTGRES_USER:-taller}
+      PG_PASSWORD: ${POSTGRES_PASSWORD:-tallerpass}
+      PG_DB: ${POSTGRES_DB:-tallerdb}
+    tty: true
+    stdin_open: true
+    networks:
+      redpsql:
+        ipv4_address: 172.18.0.4
+    depends_on:
+      - servidor
+    restart: unless-stopped
+
+networks:
+  redpsql:
+    name: redpsql
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16

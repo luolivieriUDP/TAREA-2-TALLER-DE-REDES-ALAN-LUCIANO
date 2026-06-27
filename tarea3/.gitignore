@@ -1,0 +1,15 @@
+# Credenciales locales (usar .env.example como plantilla)
+.env
+
+# Cache de Python
+__pycache__/
+*.pyc
+
+# Auxiliares de LaTeX
+*.aux
+*.toc
+*.out
+*.log
+*.synctex.gz
+*.fls
+*.fdb_latexmk

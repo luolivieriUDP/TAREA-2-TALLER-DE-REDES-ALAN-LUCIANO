@@ -1,0 +1,72 @@
+==========================================================================
+ FUZZING 1 - Payload aleatorio (dumb / generation-based fuzzing)
+ Objetivo: servidor:5432   |   Iteraciones: 10   |   Tamaño: 10-1000 bytes
+==========================================================================
+
+[Iteración  1] tamaño=642 bytes  (21.6 ms)
+   primeros 16 bytes enviados : bb 54 aa c4 b8 9d c8 68 ba 37 d9 cc 21 b2 ce ce
+   CLASIFICACIÓN              : el servidor cerró la conexión sin responder
+   ¿Servidor sigue vivo?      : SÍ -> vivo (respondió 'N' al SSLRequest)
+
+[Iteración  2] tamaño=97 bytes  (3.2 ms)
+   primeros 16 bytes enviados : 3c 6c f3 cb e7 a6 7d a5 92 2c a3 f5 73 0f 00 42
+   CLASIFICACIÓN              : el servidor cerró la conexión sin responder
+   ¿Servidor sigue vivo?      : SÍ -> vivo (respondió 'N' al SSLRequest)
+
+[Iteración  3] tamaño=457 bytes  (3.2 ms)
+   primeros 16 bytes enviados : 86 d1 fd b7 0e 2d 43 71 07 7f c0 12 75 53 85 57
+   CLASIFICACIÓN              : el servidor cerró la conexión sin responder
+   ¿Servidor sigue vivo?      : SÍ -> vivo (respondió 'N' al SSLRequest)
+
+[Iteración  4] tamaño=179 bytes  (3.2 ms)
+   primeros 16 bytes enviados : 61 09 31 3e 8a 84 82 b6 f1 8e 1a 84 bb 06 f2 5c
+   CLASIFICACIÓN              : el servidor cerró la conexión sin responder
+   ¿Servidor sigue vivo?      : SÍ -> vivo (respondió 'N' al SSLRequest)
+
+[Iteración  5] tamaño=449 bytes  (3.0 ms)
+   primeros 16 bytes enviados : ec 48 aa ac c5 94 bc 13 a7 03 18 6b 80 0e 43 a2
+   CLASIFICACIÓN              : el servidor cerró la conexión sin responder
+   ¿Servidor sigue vivo?      : SÍ -> vivo (respondió 'N' al SSLRequest)
+
+[Iteración  6] tamaño=262 bytes  (3.2 ms)
+   primeros 16 bytes enviados : 37 84 18 be 82 89 5f 29 8f 52 1f 80 d3 b3 b0 ad
+   CLASIFICACIÓN              : el servidor cerró la conexión sin responder
+   ¿Servidor sigue vivo?      : SÍ -> vivo (respondió 'N' al SSLRequest)
+
+[Iteración  7] tamaño=924 bytes  (3.1 ms)
+   primeros 16 bytes enviados : 13 3d 95 b2 14 c9 6b d9 7a 32 e1 45 65 20 96 93
+   CLASIFICACIÓN              : el servidor cerró la conexión sin responder
+   ¿Servidor sigue vivo?      : SÍ -> vivo (respondió 'N' al SSLRequest)
+
+[Iteración  8] tamaño=926 bytes  (3.5 ms)
+   primeros 16 bytes enviados : d6 2b f9 ce 70 ca 2e eb b2 7e 06 4a 18 c7 7f 72
+   CLASIFICACIÓN              : el servidor cerró la conexión sin responder
+   ¿Servidor sigue vivo?      : SÍ -> vivo (respondió 'N' al SSLRequest)
+
+[Iteración  9] tamaño=62 bytes  (2.9 ms)
+   primeros 16 bytes enviados : 45 4d 34 9d e7 94 25 f6 17 70 f9 97 58 08 ea 17
+   CLASIFICACIÓN              : el servidor cerró la conexión sin responder
+   ¿Servidor sigue vivo?      : SÍ -> vivo (respondió 'N' al SSLRequest)
+
+[Iteración 10] tamaño=999 bytes  (3.2 ms)
+   primeros 16 bytes enviados : 6d 2d e3 b4 58 02 f9 63 44 91 34 bb 89 1e 6c 98
+   CLASIFICACIÓN              : el servidor cerró la conexión sin responder
+   ¿Servidor sigue vivo?      : SÍ -> vivo (respondió 'N' al SSLRequest)
+
+==========================================================================
+ RESUMEN FUZZING 1
+==========================================================================
+   it= 1  size= 642  -> el servidor cerró la conexión sin responder   vivo=SÍ
+   it= 2  size=  97  -> el servidor cerró la conexión sin responder   vivo=SÍ
+   it= 3  size= 457  -> el servidor cerró la conexión sin responder   vivo=SÍ
+   it= 4  size= 179  -> el servidor cerró la conexión sin responder   vivo=SÍ
+   it= 5  size= 449  -> el servidor cerró la conexión sin responder   vivo=SÍ
+   it= 6  size= 262  -> el servidor cerró la conexión sin responder   vivo=SÍ
+   it= 7  size= 924  -> el servidor cerró la conexión sin responder   vivo=SÍ
+   it= 8  size= 926  -> el servidor cerró la conexión sin responder   vivo=SÍ
+   it= 9  size=  62  -> el servidor cerró la conexión sin responder   vivo=SÍ
+   it=10  size= 999  -> el servidor cerró la conexión sin responder   vivo=SÍ
+
+   El servidor PostgreSQL SOBREVIVIÓ tras las 10 iteraciones de fuzzing.
+   Conclusión: el parser del StartupMessage rechaza la entrada
+   malformada de forma segura (ErrorResponse / cierre), sin crashear.

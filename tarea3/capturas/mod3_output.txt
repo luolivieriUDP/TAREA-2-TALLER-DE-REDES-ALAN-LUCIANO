@@ -1,0 +1,45 @@
+##########################################################################
+# MODIFICACIÓN 3 - Contenido de la QUERY SQL (proxy MITM en :5433)
+# Servidor real: servidor:5432
+##########################################################################
+
+==========================================================================
+ CASO A: SELECT -> SELECT pg_sleep(5)
+==========================================================================
+   Lo que el USUARIO cree enviar: 'SELECT 1'
+   [hook] SQL original  del cliente : 'SELECT 1'
+   [hook] SQL modificado al servidor: 'SELECT pg_sleep(5)'
+   --- Lo que el CLIENTE observa como respuesta (5007 ms) ---
+       CommandComplete: SELECT 1
+       filas devueltas: 1
+           ['']
+   >> El usuario pidió 'SELECT 1' (instantáneo) pero esperó ~5.0 s.
+
+==========================================================================
+ CASO B: FROM <tabla> -> FROM tabla_inexistente_xyz
+==========================================================================
+   Lo que el USUARIO cree enviar: 'SELECT * FROM routers'
+   [hook] SQL original  del cliente : 'SELECT * FROM routers'
+   [hook] SQL modificado al servidor: 'SELECT * FROM tabla_inexistente_xyz'
+   --- Lo que el CLIENTE observa como respuesta (45 ms) ---
+       ErrorResponse -> ERROR 42P01: relation "tabla_inexistente_xyz" does not exist
+       filas devueltas: 0
+   >> El usuario consultó una tabla válida y recibió un error de tabla.
+
+==========================================================================
+ CASO C: añadir WHERE 1=0
+==========================================================================
+   Lo que el USUARIO cree enviar: 'SELECT * FROM routers'
+   [hook] SQL original  del cliente : 'SELECT * FROM routers'
+   [hook] SQL modificado al servidor: 'SELECT * FROM routers WHERE 1=0'
+   --- Lo que el CLIENTE observa como respuesta (1 ms) ---
+       CommandComplete: SELECT 0
+       filas devueltas: 0
+   >> El usuario esperaba 4 filas y recibió 0 (resultado vaciado).
+
+##########################################################################
+# Conclusión: sin TLS, el protocolo PostgreSQL no protege la INTEGRIDAD de
+# las consultas. Un MITM puede inyectar latencia (pg_sleep), redirigir a
+# tablas inexistentes o vaciar resultados (WHERE 1=0) sin que cliente ni
+# servidor lo detecten. Es el argumento técnico para exigir sslmode=require.
+##########################################################################

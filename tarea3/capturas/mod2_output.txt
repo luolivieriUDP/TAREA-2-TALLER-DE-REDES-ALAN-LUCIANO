@@ -1,0 +1,42 @@
+##########################################################################
+# MODIFICACIÓN 2 - Campo LENGTH del mensaje (proxy MITM en :5433)
+# Servidor real: servidor:5432
+##########################################################################
+
+==========================================================================
+ CASO A: length_real + 1000 (faltan 1000 bytes)
+==========================================================================
+   Cliente envía: Query 'SELECT 1' (timeout cliente=4.0s)
+   [hook] length real=13 -> length falso=1013 (0x000003F5)
+   Tiempo de respuesta: 4004.1 ms
+       RESULTADO: TIMEOUT -> el backend quedó BLOQUEADO esperando
+                  los bytes extra que nunca llegaron.
+   ¿Se recupera la sesión?  -> bloqueada (timeout)
+   ¿Servidor sigue vivo?    -> SÍ
+
+==========================================================================
+ CASO B: length_real - 4 (longitud demasiado corta)
+==========================================================================
+   Cliente envía: Query 'SELECT 1' (timeout cliente=4.0s)
+   [hook] length real=13 -> length falso=9 (0x00000009)
+   Tiempo de respuesta: 3.3 ms
+       ErrorResponse -> ERROR 08P01: invalid string in message
+   ¿Se recupera la sesión?  -> error controlado
+   ¿Servidor sigue vivo?    -> SÍ
+
+==========================================================================
+ CASO C: 0xFFFFFFFF (longitud máxima, ~4 GB)
+==========================================================================
+   Cliente envía: Query 'SELECT 1' (timeout cliente=4.0s)
+   [hook] length real=13 -> length falso=4294967295 (0xFFFFFFFF)
+   Tiempo de respuesta: 1.6 ms
+       Conexión cerrada -> conexión cerrada por el servidor
+   ¿Se recupera la sesión?  -> cerrada por el servidor
+   ¿Servidor sigue vivo?    -> SÍ
+
+##########################################################################
+# Conclusión: el campo length controla el framing del protocolo. Un length
+# mayor que el real bloquea la sesión (el server espera datos que no llegan);
+# un length absurdo dispara la validación 'invalid message length'. En ningún
+# caso cae el servidor: el aislamiento por proceso contiene el daño.
+##########################################################################

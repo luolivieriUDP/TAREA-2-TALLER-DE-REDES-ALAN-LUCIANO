@@ -1,0 +1,7 @@
+# Dependencias Python del contenedor scapy (Tarea 3)
+scapy>=2.7.0
+netfilterqueue>=1.1.0
+psycopg2-binary>=2.9.0
+matplotlib>=3.8
+pandas>=2.0
+numpy>=1.26

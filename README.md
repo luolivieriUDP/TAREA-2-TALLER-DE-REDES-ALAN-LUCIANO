@@ -15,6 +15,22 @@
 
 ---
 
+## 🎯 Tarea 3 — Inyección y Modificación de Tráfico con Scapy
+
+La **Tarea 3** está en la carpeta [`tarea3/`](tarea3/): proxy MITM, *fuzzing*,
+modificaciones del protocolo y métricas de red con cotas de desempeño.
+
+- 🎥 **Video (público):** https://youtu.be/YppxUeWYZHc
+- 📄 **Informe:** [`tarea3/informe/informe_tarea3.pdf`](tarea3/informe/informe_tarea3.pdf)
+- 📂 **Código y guía de uso:** [`tarea3/README.md`](tarea3/README.md)
+
+Resumen: 2 inyecciones de *fuzzing* (aleatorio y mutación + *bit-flipping*),
+3 modificaciones de campos del protocolo (tipo de mensaje, *length*, contenido
+SQL) y 2 métricas de red medidas con `tc netem` (latencia → cota 100 ms;
+pérdida de paquetes → cota 30 %). Todo ejecutado en los 3 contenedores Docker.
+
+---
+
 ## Tabla de contenidos
 
 1. [Descripción](#descripción)

@@ -1,0 +1,75 @@
+==========================================================================
+ FUZZING 2 - StartupMessage mutado (mutation-based + bit-flipping)
+ Objetivo: servidor:5432   usuario=taller  base=tallerdb
+==========================================================================
+
+[semilla] StartupMessage válido (61 bytes): 00 00 00 3d 00 03 00 00 75 73 65 72 00 74 61 6c 6c 65 72 00 64 61 74 61 62 61 73 65 00 74 61 6c
+
+--------------------------------------------------------------------------
+ CASO 1: Protocol version 99.0 (0x00630000) - inexistente
+   payload (61 bytes), primeros 32: 00 00 00 3d 00 63 00 00 75 73 65 72 00 74 61 6c 6c 65 72 00 64 61 74 61 62 61 73 65 00 74 61 6c
+   RESPUESTA  : ErrorResponse ('E', FATAL)
+   DETALLE    : S=FATAL  C=0A000  M=unsupported frontend protocol 99.0: server supports 3.0 to 3.0
+   ¿Vivo?     : SÍ
+
+--------------------------------------------------------------------------
+ CASO 2: Length = 0xFFFFFFFF (longitud máxima, ~4 GB)
+   payload (61 bytes), primeros 32: ff ff ff ff 00 03 00 00 75 73 65 72 00 74 61 6c 6c 65 72 00 64 61 74 61 62 61 73 65 00 74 61 6c
+   RESPUESTA  : el servidor cerró la conexión
+   ¿Vivo?     : SÍ
+
+--------------------------------------------------------------------------
+ CASO 3: Length = 0 (longitud cero)
+   payload (61 bytes), primeros 32: 00 00 00 00 00 03 00 00 75 73 65 72 00 74 61 6c 6c 65 72 00 64 61 74 61 62 61 73 65 00 74 61 6c
+   RESPUESTA  : el servidor cerró la conexión
+   ¿Vivo?     : SÍ
+
+--------------------------------------------------------------------------
+ CASO 4: Username con null byte embebido: 'post\x00gres'
+   payload (64 bytes), primeros 32: 00 00 00 40 00 03 00 00 75 73 65 72 00 70 6f 73 74 00 67 72 65 73 00 64 61 74 61 62 61 73 65 00
+   RESPUESTA  : ErrorResponse ('E', FATAL)
+   DETALLE    : S=FATAL  C=08P01  M=invalid startup packet layout: expected terminator as last byte
+   ¿Vivo?     : SÍ
+
+--------------------------------------------------------------------------
+ CASO 5: Bit-flip en 5 posiciones aleatorias
+   posiciones: byte 30 bit 2, byte 46 bit 4, byte 12 bit 6, byte 48 bit 4, byte 34 bit 3
+   payload (61 bytes), primeros 32: 00 00 00 3d 00 03 00 00 75 73 65 72 40 74 61 6c 6c 65 72 00 64 61 74 61 62 61 73 65 00 74 65 6c
+   RESPUESTA  : ErrorResponse ('E', FATAL)
+   DETALLE    : S=FATAL  C=08P01  M=invalid startup packet layout: expected terminator as last byte
+   ¿Vivo?     : SÍ
+
+--------------------------------------------------------------------------
+ CASO 6: Startup sin terminador final (\x00)
+   payload (60 bytes), primeros 32: 00 00 00 3c 00 03 00 00 75 73 65 72 00 74 61 6c 6c 65 72 00 64 61 74 61 62 61 73 65 00 74 61 6c
+   RESPUESTA  : ErrorResponse ('E', FATAL)
+   DETALLE    : S=FATAL  C=08P01  M=invalid startup packet layout: expected terminator as last byte
+   ¿Vivo?     : SÍ
+
+--------------------------------------------------------------------------
+ CASO 7: Solo 4 bytes (campo length=8), sin protocolo
+   payload (4 bytes), primeros 32: 00 00 00 08
+   RESPUESTA  : timeout (servidor esperando más bytes)
+   ¿Vivo?     : SÍ
+
+--------------------------------------------------------------------------
+ CASO 8: Username de 10.000 caracteres (buffer overflow)
+   payload (10055 bytes), primeros 32: 00 00 27 47 00 03 00 00 75 73 65 72 00 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41
+   RESPUESTA  : el servidor cerró la conexión
+   ¿Vivo?     : SÍ
+
+==========================================================================
+ RESUMEN FUZZING 2
+==========================================================================
+   Caso 1: Protocol version 99.0 (0x00630000) - inexistente   -> ErrorResponse ('E', FATAL)
+   Caso 2: Length = 0xFFFFFFFF (longitud máxima, ~4 GB)       -> el servidor cerró la conexión
+   Caso 3: Length = 0 (longitud cero)                         -> el servidor cerró la conexión
+   Caso 4: Username con null byte embebido: 'post\x00gres'    -> ErrorResponse ('E', FATAL)
+   Caso 5: Bit-flip en 5 posiciones aleatorias                -> ErrorResponse ('E', FATAL)
+   Caso 6: Startup sin terminador final (\x00)                -> ErrorResponse ('E', FATAL)
+   Caso 7: Solo 4 bytes (campo length=8), sin protocolo       -> timeout (servidor esperando más bytes)
+   Caso 8: Username de 10.000 caracteres (buffer overflow)    -> el servidor cerró la conexión
+
+   El servidor PostgreSQL sobrevivió todos los casos.
+   Conclusión: el parser valida longitud, versión y parámetros antes
+   de procesarlos; las mutaciones producen errores controlados, no caídas.
